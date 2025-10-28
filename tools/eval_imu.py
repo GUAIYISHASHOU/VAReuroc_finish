@@ -226,6 +226,54 @@ if args.also_overall:
         "cov95": float(cov95_o),
     }
 
+spears_pre = [
+    spearman_np(P_raw[...,j][mask].ravel(), logE2[...,j][mask].ravel()) if mask is not None
+    else spearman_np(P_raw[...,j].ravel(), logE2[...,j].ravel())
+    for j in range(3)
+]
+z2_pre = (T / (np.exp(P_raw) + 1e-12))
+if mask is not None:
+    m3p = np.repeat(mask[..., None], 3, axis=-1)
+    z2p_mean = float(np.mean(z2_pre[m3p]))
+    cov68_p = float(np.mean((z2_pre <= thr68)[m3p]))
+    cov95_p = float(np.mean((z2_pre <= thr95)[m3p]))
+else:
+    z2p_mean = float(np.mean(z2_pre))
+    cov68_p = float(np.mean((z2_pre <= thr68)))
+    cov95_p = float(np.mean((z2_pre <= thr95)))
+metrics_pre = {
+    "spearman_axes": spears_pre,
+    "spearman_mean": float(np.mean(spears_pre)),
+    "z2_mean": z2p_mean,
+    "cov68": cov68_p,
+    "cov95": cov95_p,
+}
+if args.also_overall:
+    var0 = np.exp(P_raw)
+    var_o0 = np.mean(var0, axis=-1, keepdims=True)
+    P_o0 = np.log(var_o0 + 1e-12)
+    T_o0 = np.mean(T, axis=-1, keepdims=True)
+    logE2_o0 = np.log(T_o0 + 1e-12)
+    if mask is not None:
+        spear_o0 = spearman_np(P_o0[mask].ravel(), logE2_o0[mask].ravel())
+        z2_o0 = (T_o0 / (np.exp(P_o0) + 1e-12))
+        z2o0_mean = float(np.mean(z2_o0[mask]))
+        cov68_o0 = float(np.mean((z2_o0 <= thr68)[mask]))
+        cov95_o0 = float(np.mean((z2_o0 <= thr95)[mask]))
+    else:
+        spear_o0 = spearman_np(P_o0.ravel(), logE2_o0.ravel())
+        z2_o0 = (T_o0 / (np.exp(P_o0) + 1e-12))
+        z2o0_mean = float(np.mean(z2_o0))
+        cov68_o0 = float(np.mean((z2_o0 <= thr68)))
+        cov95_o0 = float(np.mean((z2_o0 <= thr95)))
+    metrics_pre["overall"] = {
+        "spearman": float(spear_o0),
+        "z2_mean": float(z2o0_mean),
+        "cov68": float(cov68_o0),
+        "cov95": float(cov95_o0),
+    }
+metrics["pre_calib"] = metrics_pre
+
 print(json.dumps(metrics, indent=2))
 
 if args.plots_dir:

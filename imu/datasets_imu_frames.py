@@ -36,7 +36,11 @@ class IMUFrames(Dataset):
         self.E = np.sqrt(np.maximum(E2.astype(np.float32), 0.0))  # per-step |e|
         self.E = np.nan_to_num(self.E, nan=0.0, posinf=0.0, neginf=0.0)
         m = pick(["MASK_IMU", "mask"])
-        self.M = m.astype(np.float32) if m is not None else np.ones(self.X.shape[:2], np.float32)
+        if m is None:
+            print(f"[warn] {npz_path} 缺少 MASK_IMU，默认全1（不建议）。请在生成NPZ时写入 MASK_IMU！")
+            self.M = np.ones(self.X.shape[:2], np.float32)
+        else:
+            self.M = m.astype(np.float32)
         self.seq = pick(["SEQ_NAME", "seq_name", "seq"])
         if self.seq is None:
             self.seq = np.array([f"seq_{i}" for i in range(len(self.X))])

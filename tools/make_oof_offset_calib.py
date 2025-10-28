@@ -16,6 +16,8 @@ def main():
     ap.add_argument("--lambda_scale", type=float, default=1.0)
     ap.add_argument("--beta_min", type=float, default=0.0)
     ap.add_argument("--target_cov_overall", action="store_true")
+    # Ensure calibration uses the same sample subset as evaluation when requested
+    ap.add_argument("--apply_mask", action="store_true")
     args = ap.parse_args()
 
     import json as _json
@@ -26,6 +28,7 @@ def main():
 
     all_pred = []
     all_gt = []
+    all_mask = []
 
     for i, fold in enumerate(KF):
         scaler = os.path.join(args.save_root, f"fold{i}", "scaler.npz")
@@ -38,16 +41,19 @@ def main():
         mdl.load_state_dict(ck["model"]) 
         mdl.eval()
         with torch.no_grad():
-            preds=[]; gts=[]
+            preds=[]; gts=[]; masks=[]
             for b in dl:
                 logv,_ = mdl(b["X"]) 
                 preds.append(logv.numpy())
                 gts.append((b["E"].numpy()**2))
+                masks.append(b["M"].numpy())
         all_pred.append(np.concatenate(preds,0))
         all_gt.append(np.concatenate(gts,0))
+        all_mask.append(np.concatenate(masks,0))
 
     P = np.concatenate(all_pred,0)
     T = np.concatenate(all_gt,0)
+    M = np.concatenate(all_mask,0)  # (N,T)
     z2 = T / (np.exp(P) + 1e-12)
     # Only keep overall-coverage calibration (overall@target_cov)
     tgt = float(args.target_cov)
@@ -59,7 +65,11 @@ def main():
     T_o = np.mean(T, axis=-1, keepdims=True)
     def cov_of(beta: float) -> float:
         z2o = T_o / (np.exp(P_o + beta) + 1e-12)
-        return float((z2o <= thr).mean())
+        if args.apply_mask:
+            base = (M > 0.5)
+            return float(((z2o <= thr)[base]).mean()) if base.any() else float((z2o <= thr).mean())
+        else:
+            return float((z2o <= thr).mean())
     lo, hi = -6.0, 6.0
     for _ in range(40):
         mid = 0.5*(lo+hi)

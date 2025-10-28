@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 Set-Location -Path $PSScriptRoot
 
 $Route = "acc"
-$CacheRoot = "F:\SLAMdata\_cache\imu"
+$CacheRoot = "F:\SLAMdata\_cache\IMU_ACC"
 $TrainNPZ = Join-Path $CacheRoot "train_acc.npz"
 $TestNPZ  = Join-Path $CacheRoot "test_acc_mh_03.npz"
 $SaveRoot = "runs\acc_oof_ep200"

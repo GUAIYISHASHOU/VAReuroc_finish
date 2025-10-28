@@ -15,7 +15,8 @@ for k in ["SEQ_NAME","seq_name","seq"]:
         seq = d[k]
         break
 if seq is None:
-    seq = np.array([f"s{i}" for i in range(d[list(d.files)[0]].shape[0])])
+    # Align with IMUFrames fallback naming: seq_0, seq_1, ...
+    seq = np.array([f"seq_{i}" for i in range(d[list(d.files)[0]].shape[0])])
 
 uniq = np.unique(seq)
 rng = np.random.default_rng(args.seed)
