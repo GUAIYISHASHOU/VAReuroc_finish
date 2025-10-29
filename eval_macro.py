@@ -431,9 +431,7 @@ def main():
             if pred_before_sa is not None:
                 fig, ax = plt.subplots(figsize=(7.5, 5))
                 aniso_gt   = (gt[:, 0] - gt[:, 1]) / 2.0
-                aniso_pre  = (pred_before_sa[:, 0] - pred_before_sa[:, 1]) / 2.0
                 aniso_post = (pred[:, 0] - pred[:, 1]) / 2.0
-                ax.hist(aniso_pre,  bins=60, alpha=0.5, label='Pred a (before s/a)', density=True)
                 ax.hist(aniso_post, bins=60, alpha=0.5, label='Pred a (after s/a)',  density=True)
                 ax.hist(aniso_gt,   bins=60, alpha=0.35, label='GT a', density=True)
                 ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
