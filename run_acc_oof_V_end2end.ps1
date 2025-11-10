@@ -7,7 +7,8 @@ $SplitDir   = "F:\SLAMdata\_cache\imu_split_V"
 $SaveRoot = "runs\acc_oof_V_b104_ep200"
 $K = 4
 $KJson = Join-Path $SaveRoot ("k{0}.json" -f $K)
-$CalibOut = Join-Path $SaveRoot "calibrator_oof_offset_overall68.json"
+$CalibOutV1 = Join-Path $SaveRoot "calibrator_oof_offset_overall67.json"
+$CalibOutV2 = Join-Path $SaveRoot "calibrator_oof_offset_overall68.json"
 $PlotsDir = Join-Path $SaveRoot "V_plots_overall68_foldsc"
 
 New-Item -ItemType Directory -Force -Path $SaveRoot | Out-Null
@@ -53,7 +54,17 @@ python -m tools.make_oof_offset_calib `
   --npz $TrainNPZ `
   --kfold_json $KJson `
   --save_root $SaveRoot `
-  --out_json $CalibOut `
+  --out_json $CalibOutV1 `
+  --target_cov_overall `
+  --target_cov 0.67 `
+  --beta_min -6.0
+
+python -m tools.make_oof_offset_calib `
+  --route $Route `
+  --npz $TrainNPZ `
+  --kfold_json $KJson `
+  --save_root $SaveRoot `
+  --out_json $CalibOutV2 `
   --target_cov_overall `
   --target_cov 0.68 `
   --beta_min -6.0
@@ -61,14 +72,14 @@ python -m tools.make_oof_offset_calib `
 # Per-sequence evaluation (no mixing) on the two test sequences
 $TestSeq1 = "F:\SLAMdata\_cache\imu_eachseq_V\V1_03_difficult_T512_S256.npz"
 $TestSeq2 = "F:\SLAMdata\_cache\imu_eachseq_V\V2_02_medium_T512_S256.npz"
-$Plots1 = Join-Path $SaveRoot "V1_03_difficult_plots_overall68_foldsc"
+$Plots1 = Join-Path $SaveRoot "V1_03_difficult_plots_overall67_foldsc"
 $Plots2 = Join-Path $SaveRoot "V2_02_medium_plots_overall68_foldsc"
 
 python -m tools.eval_imu `
   --route $Route `
   --npz $TestSeq1 `
   --ckpt_glob (Join-Path $SaveRoot "fold*\best.pt") `
-  --calib_json $CalibOut `
+  --calib_json $CalibOutV1 `
   --plots_dir $Plots1 `
   --use_fold_scalers `
   --also_overall `
@@ -79,7 +90,7 @@ python -m tools.eval_imu `
   --route $Route `
   --npz $TestSeq2 `
   --ckpt_glob (Join-Path $SaveRoot "fold*\best.pt") `
-  --calib_json $CalibOut `
+  --calib_json $CalibOutV2 `
   --plots_dir $Plots2 `
   --use_fold_scalers `
   --also_overall `
